@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Status {
+  NEW
+  CONTACTED
+  FOLLOW_UP
+  CLOSED
+}
+
+model Account {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  provider     String    @default("gmail")
+  refreshToken String
+  lastSyncAt   DateTime?
+  active       Boolean   @default(true)
+  leads        Lead[]
+}
+
+model Lead {
+  id         Int       @id @default(autoincrement())
+  messageId  String
+  accountId  String
+  account    Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  receivedAt DateTime
+  name       String
+  email      String
+  phone      String?
+  subject    String
+  enquiry    String
+  status     Status    @default(NEW)
+  assignedTo String?
+  remarks    String?
+  followUpAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@unique([accountId, messageId])
+  @@index([status])
+  @@index([receivedAt])
+}
